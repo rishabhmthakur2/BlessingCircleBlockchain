@@ -67,7 +67,7 @@ let handleSendTransaction = async (amount) => {
           "type": "function"
         }
       ],
-      '0x227b637dc5529bede1b99ae01efd1eae04120d53',
+      '0xb6A3bd9A14111E99894239E0CF5cd3463aA60DDe',
     );
     try {
       fetch('/checkCircleAlmostFull?id='+senderAddress+'&amount='+amount, {
