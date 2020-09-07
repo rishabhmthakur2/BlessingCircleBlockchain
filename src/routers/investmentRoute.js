@@ -140,6 +140,7 @@ let payAndSplitCircle = async (filledCircle) => {
 }
 
 router.post('/invest', async (req, res) => {
+  let transactionIds = [];
   paymentToBeMade = false
   paymentToBeMadeAddress = 'TRPrKjJNjLAUBVHmtCLVyE9RUAGTBN1sc1'
   let senderAddress = req.body.senderAddress
@@ -158,19 +159,22 @@ router.post('/invest', async (req, res) => {
     let newCircle = await createNewCircle(investmentAmount)
     await availableCircles.push(newCircle)
   }
-  try {
-    await pushParticipantToCircle(
-      availableCircles[0],
-      senderAddress,
-      transactionId,
-    )
-    res.status(200).send({
-      message: 'Investment completed',
-      paymentStatus: paymentToBeMade,
-      address: paymentToBeMadeAddress,
-    })
-  } catch (error) {
-    res.status(400).send(error)
+  transactionIds.push(transactionId);
+  if(transactionIds.indexOf(transactionId) > -1 ){
+    try {
+      await pushParticipantToCircle(
+        availableCircles[0],
+        senderAddress,
+        transactionId,
+      )
+      res.status(200).send({
+        message: 'Investment completed',
+        paymentStatus: paymentToBeMade,
+        address: paymentToBeMadeAddress,
+      })
+    } catch (error) {
+      res.status(400).send(error)
+    }
   }
 })
 
