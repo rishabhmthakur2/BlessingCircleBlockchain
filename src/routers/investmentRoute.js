@@ -1,5 +1,5 @@
 const express = require('express')
-var request = require('request');
+var request = require('request')
 const router = new express.Router()
 const Circle = require('../models/investmentModel')
 const Investment = require('../models/transactionModel')
@@ -15,35 +15,39 @@ let tronWeb = new TronWeb({
 })
 
 let eventListenerForCalls = async () => {
-  let transactionIds = [];
+  let transactionIds = []
   const blessingCircle = await tronWeb
     .contract()
     .at('TTJZdL2nYRpqtHNMLaroqmAB3kVPrrbBpU')
   blessingCircle.transactionReceived().watch((err, eventResult) => {
     if (eventResult) {
-      console.log(eventResult);
-      
+      console.log(eventResult)
+
       let transactionId = eventResult.result.id
       let sender = eventResult.result._sender
       let transactionAmount = eventResult.result._transactionAmount
       console.log('Event Received')
-      transactionIds.push(transactionId)
-      if(transactionIds.indexOf(transactionId) > -1 ){
-        try{
+      if (transactionIds.indexOf(transactionId) > -1) {
+      } else {
+        transactionIds.push(transactionId)
+        try {
           var options = {
-            'method': 'POST',
-            'url': 'http://blessingcircle.herokuapp.com/invest',
-            'headers': {
-              'Content-Type': 'application/json'
+            method: 'POST',
+            url: 'http://blessingcircle.herokuapp.com/invest',
+            headers: {
+              'Content-Type': 'application/json',
             },
-            body: JSON.stringify({"senderAddress":sender,"investmentAmount":transactionAmount,"transactionId":transactionId})
-          
-          };
+            body: JSON.stringify({
+              senderAddress: sender,
+              investmentAmount: transactionAmount,
+              transactionId: transactionId,
+            }),
+          }
           request(options, function (error, response) {
-            if (error) throw new Error(error);
-            console.log(response.body);
-          });
-        } catch (error){
+            if (error) throw new Error(error)
+            console.log(response.body)
+          })
+        } catch (error) {
           console.log(error)
         }
       }
@@ -140,7 +144,7 @@ let payAndSplitCircle = async (filledCircle) => {
 }
 
 router.post('/invest', async (req, res) => {
-  let transactionIds = [];
+  let transactionIds = []
   paymentToBeMade = false
   paymentToBeMadeAddress = 'TRPrKjJNjLAUBVHmtCLVyE9RUAGTBN1sc1'
   let senderAddress = req.body.senderAddress
@@ -159,8 +163,10 @@ router.post('/invest', async (req, res) => {
     let newCircle = await createNewCircle(investmentAmount)
     await availableCircles.push(newCircle)
   }
-  transactionIds.push(transactionId);
-  if(transactionIds.indexOf(transactionId) > -1 ){
+  if (transactionIds.indexOf(transactionId) > -1) {}
+  else{
+  transactionIds.push(transactionId)
+
     try {
       await pushParticipantToCircle(
         availableCircles[0],
