@@ -1,92 +1,55 @@
 console.log('File loaded')
 let web3
 
-// connectToWallet = async () => {
-//     event.preventDefault();
-//     if (window.ethereum) {
-//         web3 = new Web3(window.ethereum);
-//         await ethereum.enable();
-//     } else if (window.web3) {
-//         web3 = new Web3(window.web3.currentProvider);
-//     }
-//     const accounts = await web3.eth.getAccounts();
-//     document.getElementById("connect-web3").value = "Connected to Wallet";
-// };
-
 let handleSendTransaction = async (amount) => {
-  if (window.ethereum) {
-    web3 = new Web3(window.ethereum)
-    await ethereum.enable()
-  } else if (window.web3) {
-    web3 = new Web3(window.web3.currentProvider)
-  }
-
   if (!amount) {
     window.alert('Please choose amount to invest')
-  } else if (!web3) {
-    window.alert('Not connected to a Web3 Wallet')
+  } else if (!window.tronWeb) {
+    window.alert('Not connected to a Tron Wallet')
   } else {
-    const addresses = await web3.eth.getAccounts()
-    const senderAddress = addresses[0]
-    const blessingCircle = new web3.eth.Contract(
-      [
-        {
-          "inputs": [],
-          "stateMutability": "nonpayable",
-          "type": "constructor"
-        },
-        {
-          "inputs": [],
-          "name": "balanceOf",
-          "outputs": [
-            {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "bool",
-              "name": "_makePayment",
-              "type": "bool"
-            },
-            {
-              "internalType": "address payable",
-              "name": "_reciepent",
-              "type": "address"
-            }
-          ],
-          "name": "invest",
-          "outputs": [],
-          "stateMutability": "payable",
-          "type": "function"
-        }
-      ],
-      '0xb6A3bd9A14111E99894239E0CF5cd3463aA60DDe',
-    );
+    const senderAddress = await window.tronWeb.defaultAddress.hex
+    const blessingCircle = await tronWeb
+      .contract()
+      .at('TTJZdL2nYRpqtHNMLaroqmAB3kVPrrbBpU')
     try {
-      fetch('/checkCircleAlmostFull?id='+senderAddress+'&amount='+amount, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': '*/*'
-      }
-      }).then((response)=>{
-        return response.json();
-      }).then((data)=>{
-        console.log(data);
-        blessingCircle.methods
-            .invest(data.paymentStatus, data.address)
-            .send({
-              from: senderAddress,
-              value: amount * 1000000000000000000,
-            })
-            .on('transactionHash', function (hash) {
+      fetch(
+        '/checkCircleAlmostFull?id=' + senderAddress + '&amount=' + amount*1000000,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: '*/*',
+          },
+        },
+      )
+        .then((response) => {
+          return response.json()
+        })
+        .then(async (data) => {
+            blessingCircle
+              .invest(data.transactionId, data.paymentStatus, data.address)
+              .send({
+                callValue: amount * 1000000,
+              })
+              .then(async (response) => {
+                // alert('You can check your position once your transaction has been confirmed.\nThis usually takes about 5-10 minutes depending on Gas and network congestion.\nClock on "View Transaction button to view transaction status.\nYour transaction should start reflecting on Tronscan in 2-3 minutes.')
+                document.getElementById('btn-send').value = 'View Transaction'
+                document.getElementById('btn-send').onclick = function () {
+                  window.open(
+                    'https://shasta.tronscan.org/#/transaction/' + response,
+                  )
+                  window.location.reload()
+                }
+              });
+          })
+          blessingCircle.transactionReceived().watch((err, eventResult) => {
+            if (err) {
+              return console.error('Error with "method" event:', err)
+            }
+            if (eventResult) {
+              let transactionId = eventResult.result.id
+              let sender = eventResult.result._sender
+              let transactionAmount = eventResult.result._transactionAmount
               fetch('/invest', {
                 method: 'POST',
                 headers: {
@@ -94,55 +57,26 @@ let handleSendTransaction = async (amount) => {
                   Accept: '*/*',
                 },
                 body: JSON.stringify({
-                  senderAddress: senderAddress,
-                  investmentAmount: amount.toString(),
+                  senderAddress: sender,
+                  investmentAmount: transactionAmount,
+                  transactionId
                 }),
               });
-              document.getElementById('btn-send').value = 'View Transaction'
-              document.getElementById('btn-send').onclick = function () {
-                window.open('https://ropsten.etherscan.io/tx/' + hash)
-                window.location.reload()
-              }
-            })
-            .on('error', function (error) {
-              window.alert(JSON.stringify(error.stack))
-            })
-      })
-      // fetch('/invest', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     Accept: '*/*',
-      //   },
-      //   body: JSON.stringify({
-      //     senderAddress: senderAddress,
-      //     investmentAmount: amount.toString(),
-      //   }),
-      // })
-      //   .then((res) => {
-      //     return res.json()
-      //     //Payment handling goes here
-      //   })
-      //   .then((data) => {
-      //     console.log(data);
-      //     blessingCircle.methods
-      //       .invest(data.paymentStatus, data.address)
-      //       .send({
-      //         from: senderAddress,
-      //         value: amount * 1000000000000000000,
-      //       })
-      //       .on('transactionHash', function (hash) {
-      //         document.getElementById('btn-send').value = 'View Transaction'
-      //         document.getElementById('btn-send').onclick = function () {
-      //           window.open('https://ropsten.etherscan.io/tx/' + hash)
-      //           window.location.reload()
-      //         }
-      //       })
-      //       .on('error', function (error) {
-      //         window.alert(JSON.stringify(error.stack))
-      //       })
-      //   })
-    } catch (error) {
+            // fetch('/transactionReceived', {
+            //   method: 'POST',
+            //   headers: {
+            //     'Content-Type': 'application/json',
+            //     Accept: '*/*',
+            //   },
+            //   body: JSON.stringify({
+            //     transactionId,
+            //     sender,
+            //     transactionAmount,
+            //   }),
+            // });
+          }
+          });
+        } catch (error) {
       window.alert(JSON.stringify(error))
     }
   }
@@ -154,13 +88,13 @@ var radio3 = document.getElementById('one')
 
 document.getElementById('btn-send').onclick = function () {
   if (radio1.checked) {
-    inputAmount = 0.1
+    inputAmount = 100
   }
   if (radio2.checked) {
-    inputAmount = 0.5
+    inputAmount = 500
   }
   if (radio3.checked) {
-    inputAmount = 1
+    inputAmount = 1000
   }
   handleSendTransaction(inputAmount)
 }

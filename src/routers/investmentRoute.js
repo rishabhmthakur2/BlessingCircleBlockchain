@@ -1,7 +1,48 @@
 const express = require('express')
+var request = require('request');
 const router = new express.Router()
 const Circle = require('../models/investmentModel')
+const Investment = require('../models/transactionModel')
 const mongoose = require('mongoose')
+const { v4: uuidv4 } = require('uuid')
+
+let TronWeb = require('tronweb')
+
+let tronWeb = new TronWeb({
+  fullNode: 'https://api.shasta.trongrid.io',
+  solidityNode: 'https://api.shasta.trongrid.io',
+  eventServer: 'https://api.shasta.trongrid.io',
+})
+
+let eventListenerForCalls = async () => {
+  const blessingCircle = await tronWeb
+    .contract()
+    .at('TTJZdL2nYRpqtHNMLaroqmAB3kVPrrbBpU')
+  blessingCircle.transactionReceived().watch((err, eventResult) => {
+    if (eventResult) {
+      console.log(eventResult);
+      let transactionId = eventResult.result.id
+      let sender = eventResult.result._sender
+      let transactionAmount = eventResult.result._transactionAmount
+      console.log('Event Received')
+      var options = {
+        'method': 'POST',
+        'url': 'http://blessingcircle.herokuapp.com/invest',
+        'headers': {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({"senderAddress":sender,"investmentAmount":transactionAmount,"transactionId":transactionId})
+      
+      };
+      request(options, function (error, response) {
+        if (error) throw new Error(error);
+        console.log(response.body);
+      });
+      
+    }
+  })
+}
+eventListenerForCalls()
 
 let paymentToBeMade
 let paymentToBeMadeAddress
@@ -20,12 +61,17 @@ let createNewCircle = async (investmentAmount) => {
   })
 }
 
-let pushParticipantToCircle = async (filledCircle, senderAddress) => {
+let pushParticipantToCircle = async (
+  filledCircle,
+  senderAddress,
+  transactionId,
+) => {
   return new Promise(async (resolve, reject) => {
     try {
       filledCircle.participants = filledCircle.participants.concat({
         investor: senderAddress,
         position: filledCircle.participants.length + 1,
+        transactionId,
       })
       filledCircle.participantCount += 1
       await filledCircle.save()
@@ -43,16 +89,16 @@ let pushParticipantToCircle = async (filledCircle, senderAddress) => {
 
 let payAndSplitCircle = async (filledCircle) => {
   // Pay to 1st address
-  paymentToBeMade = true;
-  paymentToBeMadeAddress = filledCircle.participants[0].investor;
-  investmentType = filledCircle.investmentAmount;
+  paymentToBeMade = true
+  paymentToBeMadeAddress = filledCircle.participants[0].investor
+  investmentType = filledCircle.investmentAmount
   return new Promise(async (resolve, reject) => {
     let newCircle1 = await createNewCircle(filledCircle.investmentAmount)
     let newCircle2 = await createNewCircle(filledCircle.investmentAmount)
     try {
       for (let i = 2; i < 9; i++) {
         try {
-          filledCircle.participants[i - 1].position -= 1;
+          filledCircle.participants[i - 1].position -= 1
           newCircle1.participants = newCircle1.participants.concat(
             filledCircle.participants[i - 1],
           )
@@ -64,7 +110,7 @@ let payAndSplitCircle = async (filledCircle) => {
       }
       for (let i = 9; i < 16; i++) {
         try {
-          filledCircle.participants[i - 1].position -= 1;
+          filledCircle.participants[i - 1].position -= 1
           newCircle2.participants = newCircle2.participants.concat(
             filledCircle.participants[i - 1],
           )
@@ -87,13 +133,14 @@ let payAndSplitCircle = async (filledCircle) => {
 
 router.post('/invest', async (req, res) => {
   paymentToBeMade = false
-  paymentToBeMadeAddress = '0x14892700213f98628C9033642476996d1d730572'
+  paymentToBeMadeAddress = 'TRPrKjJNjLAUBVHmtCLVyE9RUAGTBN1sc1'
   let senderAddress = req.body.senderAddress
   let investmentAmount = req.body.investmentAmount
+  let transactionId = req.body.transactionId
   if (
-    investmentAmount != '0.1' &&
-    investmentAmount != '0.5' &&
-    investmentAmount != '1'
+    investmentAmount != '100000000' &&
+    investmentAmount != '500000000' &&
+    investmentAmount != '1000000000'
   ) {
     res.status(400).send('Invalid investment amount')
   }
@@ -104,7 +151,11 @@ router.post('/invest', async (req, res) => {
     await availableCircles.push(newCircle)
   }
   try {
-    await pushParticipantToCircle(availableCircles[0], senderAddress)
+    await pushParticipantToCircle(
+      availableCircles[0],
+      senderAddress,
+      transactionId,
+    )
     res.status(200).send({
       message: 'Investment completed',
       paymentStatus: paymentToBeMade,
@@ -141,36 +192,57 @@ router.get('/findPosition?:id', async (req, res) => {
       .status(404)
       .send({ message: 'No investment found with that address!' })
   }
-});
+})
 
 router.get('/checkCircleAlmostFull?:id', async (req, res) => {
-  paymentToBeMadeAddress = '0x14892700213f98628C9033642476996d1d730572'
-  let participantAddress = req.query.id;
-  let investmentAmount = req.query.amount;
+  paymentToBeMadeAddress = 'TRPrKjJNjLAUBVHmtCLVyE9RUAGTBN1sc1'
+  let transactionId = uuidv4()
+  let participantAddress = req.query.id
+  let investmentAmount = req.query.amount
   try {
     let availableCircles = []
     availableCircles = await Circle.find({ investmentAmount }).sort({ _id: 1 })
     if (availableCircles.length > 0) {
       if (availableCircles[0].participants.length == 14) {
-        paymentToBeMadeAddress =
-              availableCircles[0].participants[0].investor;
+        paymentToBeMadeAddress = availableCircles[0].participants[0].investor
 
         res.status(200).send({
+          transactionId,
           paymentStatus: true,
           address: paymentToBeMadeAddress,
-        });
+        })
       } else {
         res.status(200).send({
+          transactionId,
           paymentStatus: false,
           address: paymentToBeMadeAddress,
         })
       }
     } else {
       res.status(200).send({
+        transactionId,
         paymentStatus: false,
         address: paymentToBeMadeAddress,
       })
     }
+  } catch (error) {
+    res.status(400).send(error)
+  }
+})
+
+router.post('/transactionReceived', async (req, res) => {
+  let transactionId = req.body.transactionId
+  let investmentAmount = req.body.transactionAmount
+  let investorAddress = req.body.sender
+  // console.log(req.body);
+  try {
+    let investment = new Investment({
+      transactionId,
+      investmentAmount,
+      investorAddress,
+    })
+    await investment.save()
+    res.status(200).send()
   } catch (error) {
     res.status(400).send(error)
   }

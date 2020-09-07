@@ -6,7 +6,7 @@ const circleSchema = new mongoose.Schema({
         type: String,
         required: true,
         validate(value){
-            if(value != '0.1' && value != '0.5' && value != '1'){
+            if(value != '100000000' && value != '500000000' && value != '1000000000'){
                 throw new Error('Invalid investment amount');
             }
         }
@@ -30,6 +30,10 @@ const circleSchema = new mongoose.Schema({
                     throw new Error('Invalid participant entry ')
                 }
             }
+        },
+        transactionId: {
+            type: String,
+            required: true,
         }
     }]
 },{
