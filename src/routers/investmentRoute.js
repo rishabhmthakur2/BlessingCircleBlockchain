@@ -15,30 +15,38 @@ let tronWeb = new TronWeb({
 })
 
 let eventListenerForCalls = async () => {
+  let transactionIds = [];
   const blessingCircle = await tronWeb
     .contract()
     .at('TTJZdL2nYRpqtHNMLaroqmAB3kVPrrbBpU')
   blessingCircle.transactionReceived().watch((err, eventResult) => {
     if (eventResult) {
       console.log(eventResult);
+      
       let transactionId = eventResult.result.id
       let sender = eventResult.result._sender
       let transactionAmount = eventResult.result._transactionAmount
       console.log('Event Received')
-      var options = {
-        'method': 'POST',
-        'url': 'http://blessingcircle.herokuapp.com/invest',
-        'headers': {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({"senderAddress":sender,"investmentAmount":transactionAmount,"transactionId":transactionId})
-      
-      };
-      request(options, function (error, response) {
-        if (error) throw new Error(error);
-        console.log(response.body);
-      });
-      
+      transactionIds.push(transactionId)
+      if(transactionIds.indexOf(transactionId) > -1 ){
+        try{
+          var options = {
+            'method': 'POST',
+            'url': 'http://blessingcircle.herokuapp.com/invest',
+            'headers': {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({"senderAddress":sender,"investmentAmount":transactionAmount,"transactionId":transactionId})
+          
+          };
+          request(options, function (error, response) {
+            if (error) throw new Error(error);
+            console.log(response.body);
+          });
+        } catch (error){
+          console.log(error)
+        }
+      }
     }
   })
 }
