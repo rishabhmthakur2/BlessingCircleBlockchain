@@ -44,8 +44,8 @@ app.get('/check', (req, res) => {
   res.render('check')
 })
 
-cron.schedule('*/1 * * * *', () => {
-  console.log('Cron job after every 5 minutes')
+cron.schedule('*/5 * * * *', () => {
+  // console.log('Cron job after every 5 minutes')
   investment.eventListenerForCalls()
 })
 

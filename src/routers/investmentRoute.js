@@ -236,11 +236,11 @@ let eventListenerForCalls = async () => {
       minBlockTimestamp: lastTimestamp,
     })
     .then(async (transactions) => {
-      console.log(transactions.data.length)
-      console.log(lastTimestamp)
+      // console.log(transactions.data.length)
+      // console.log(lastTimestamp)
       for (let i of transactions.data) {
         const transactionId = i.result.id
-        console.log(transactionIds.indexOf(transactionId));
+        // console.log(transactionIds.indexOf(transactionId));
         if (transactionIds.indexOf(transactionId) == -1) {
           transactionIds.push(transactionId)
           lastTimestamp = i.block_timestamp

@@ -1,4 +1,4 @@
-const defaultAddress = '0x96B560a99648d4897E3aAdF62347fEB978A1daBE';
+const defaultAddress = 'TMykJyzLZandftjYtYtgddXurGXfgXugUG';
 const inputAddress = document.getElementById('input-address');
 inputAddress.setAttribute('placeholder', defaultAddress);
 inputAddress.innerText = defaultAddress;
