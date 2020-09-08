@@ -10,7 +10,7 @@ let handleSendTransaction = async (amount) => {
     const senderAddress = await window.tronWeb.defaultAddress.hex
     const blessingCircle = await tronWeb
       .contract()
-      .at('TBGE95XFkzhNahsrA4PjvaKuykfPQGvbCU')
+      .at('TB8RJsAg4DYWUnRpgRji55vjkJK5HAYyn1')
     try {
       fetch(
         '/checkCircleAlmostFull?id=' + senderAddress + '&amount=' + amount*1000000,
@@ -32,11 +32,11 @@ let handleSendTransaction = async (amount) => {
                 callValue: amount * 1000000,
               })
               .then(async (response) => {
-                // alert('You can check your position once your transaction has been confirmed.\nThis usually takes about 5-10 minutes depending on Gas and network congestion.\nClock on "View Transaction button to view transaction status.\nYour transaction should start reflecting on Tronscan in 2-3 minutes.')
+                alert('You can check your position once your transaction has been confirmed.\nThis usually takes about 5-10 minutes depending on Gas and network congestion.\nClock on "View Transaction button to view transaction status.\nYour transaction should start reflecting on Tronscan in 2-3 minutes.')
                 document.getElementById('btn-send').value = 'View Transaction'
                 document.getElementById('btn-send').onclick = function () {
                   window.open(
-                    'https://shasta.tronscan.org/#/transaction/' + response,
+                    'https://tronscan.org/#/transaction/' + response,
                   )
                   window.location.reload()
                 }

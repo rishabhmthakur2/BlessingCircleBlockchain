@@ -219,9 +219,9 @@ router.post('/transactionReceived', async (req, res) => {
 })
 
 let tronWeb = new TronWeb({
-  fullNode: 'https://api.shasta.trongrid.io',
-  solidityNode: 'https://api.shasta.trongrid.io',
-  eventServer: 'https://api.shasta.trongrid.io',
+  fullNode: 'https://api.trongrid.io',
+  solidityNode: 'https://api.trongrid.io',
+  eventServer: 'https://api.trongrid.io',
 })
 
 const tronGrid = new TronGrid(tronWeb)
@@ -230,7 +230,7 @@ let lastTimestamp = '1599500766000'
 
 let eventListenerForCalls = async () => {
   tronGrid.contract
-    .getEvents('TBGE95XFkzhNahsrA4PjvaKuykfPQGvbCU', {
+    .getEvents('TB8RJsAg4DYWUnRpgRji55vjkJK5HAYyn1', {
       limit: 200,
       onlyConfirmed: true,
       minBlockTimestamp: lastTimestamp,
