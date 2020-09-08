@@ -9,13 +9,13 @@ var radio3 = document.getElementById('one');
 
 document.getElementById('btn-check').onclick = async function () {
     if(radio1.checked){
-        inputAmount = 100
+        inputAmount = 1000
     }
     if(radio2.checked){
-        inputAmount = 500
+        inputAmount = 6000
     }
     if(radio3.checked){
-        inputAmount = 1000;
+        inputAmount = 15000;
     }
     console.log(inputAddress.value);
     console.log(inputAmount);

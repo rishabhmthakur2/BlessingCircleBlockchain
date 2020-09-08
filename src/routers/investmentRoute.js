@@ -103,9 +103,9 @@ router.post('/invest', async (req, res) => {
   let investmentAmount = req.body.investmentAmount
   let transactionId = req.body.transactionId
   if (
-    investmentAmount != '100000000' &&
-    investmentAmount != '500000000' &&
-    investmentAmount != '1000000000'
+    investmentAmount != '1000000000' &&
+    investmentAmount != '6000000000' &&
+    investmentAmount != '15000000000'
   ) {
     res.status(400).send('Invalid investment amount')
   }
@@ -247,9 +247,9 @@ let eventListenerForCalls = async () => {
           let senderAddress = i.result._sender
           let investmentAmount = i.result._transactionAmount
           if (
-            investmentAmount != '100000000' &&
-            investmentAmount != '500000000' &&
-            investmentAmount != '1000000000'
+            investmentAmount != '1000000000' &&
+            investmentAmount != '6000000000' &&
+            investmentAmount != '15000000000'
           ) {
             res.status(400).send('Invalid investment amount')
           }

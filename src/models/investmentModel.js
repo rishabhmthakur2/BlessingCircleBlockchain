@@ -6,7 +6,7 @@ const circleSchema = new mongoose.Schema({
         type: String,
         required: true,
         validate(value){
-            if(value != '100000000' && value != '500000000' && value != '1000000000'){
+            if(value != '1000000000' && value != '6000000000' && value != '15000000000'){
                 throw new Error('Invalid investment amount');
             }
         }
