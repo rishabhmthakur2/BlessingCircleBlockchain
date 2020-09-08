@@ -5,60 +5,8 @@ const Circle = require('../models/investmentModel')
 const Investment = require('../models/transactionModel')
 const mongoose = require('mongoose')
 const { v4: uuidv4 } = require('uuid')
-
-let TronWeb = require('tronweb')
-
-let tronWeb = new TronWeb({
-  fullNode: 'https://api.shasta.trongrid.io',
-  solidityNode: 'https://api.shasta.trongrid.io',
-  eventServer: 'https://api.shasta.trongrid.io',
-})
-
-// let eventListenerForCalls = async () => {
-//   let transactionIds = []
-//   const blessingCircle = await tronWeb
-//     .contract()
-//     .at('TTJZdL2nYRpqtHNMLaroqmAB3kVPrrbBpU')
-//   console.log(blessingCircle);
-//   blessingCircle.transactionReceived().watch((err, eventResult) => {
-//     console.log('Inside');
-//     if (err){
-//       console.log('Error in watch event:', err);
-//     }
-//     if (eventResult) {
-//       console.log(eventResult)
-//       let transactionId = eventResult.result.id
-//       let sender = eventResult.result._sender
-//       let transactionAmount = eventResult.result._transactionAmount
-//       console.log('Event Received')
-//       if (transactionIds.indexOf(transactionId) > -1) {
-//       } else {
-//         transactionIds.push(transactionId)
-//         try {
-//           var options = {
-//             method: 'POST',
-//             url: 'http://blessingcircle.herokuapp.com/invest',
-//             headers: {
-//               'Content-Type': 'application/json',
-//             },
-//             body: JSON.stringify({
-//               senderAddress: sender,
-//               investmentAmount: transactionAmount,
-//               transactionId: transactionId,
-//             }),
-//           }
-//           request(options, function (error, response) {
-//             if (error) throw new Error(error)
-//             console.log(response.body)
-//           })
-//         } catch (error) {
-//           console.log(error)
-//         }
-//       }
-//     }
-//   })
-// }
-// eventListenerForCalls()
+const TronWeb = require('tronweb')
+const TronGrid = require('trongrid')
 
 let paymentToBeMade
 let paymentToBeMadeAddress
@@ -167,9 +115,9 @@ router.post('/invest', async (req, res) => {
     let newCircle = await createNewCircle(investmentAmount)
     await availableCircles.push(newCircle)
   }
-  if (transactionIds.indexOf(transactionId) > -1) {}
-  else{
-  transactionIds.push(transactionId)
+  if (transactionIds.indexOf(transactionId) > -1) {
+  } else {
+    transactionIds.push(transactionId)
 
     try {
       await pushParticipantToCircle(
@@ -270,4 +218,61 @@ router.post('/transactionReceived', async (req, res) => {
   }
 })
 
-module.exports = router
+let tronWeb = new TronWeb({
+  fullNode: 'https://api.shasta.trongrid.io',
+  solidityNode: 'https://api.shasta.trongrid.io',
+  eventServer: 'https://api.shasta.trongrid.io',
+})
+
+const tronGrid = new TronGrid(tronWeb)
+let transactionIds = []
+let lastTimestamp = '1599500766000'
+
+let eventListenerForCalls = async () => {
+  tronGrid.contract
+    .getEvents('TBGE95XFkzhNahsrA4PjvaKuykfPQGvbCU', {
+      limit: 200,
+      onlyConfirmed: true,
+      minBlockTimestamp: lastTimestamp,
+    })
+    .then(async (transactions) => {
+      console.log(transactions.data.length)
+      console.log(lastTimestamp)
+      for (let i of transactions.data) {
+        const transactionId = i.result.id
+        console.log(transactionIds.indexOf(transactionId));
+        if (transactionIds.indexOf(transactionId) == -1) {
+          transactionIds.push(transactionId)
+          lastTimestamp = i.block_timestamp
+          let senderAddress = i.result._sender
+          let investmentAmount = i.result._transactionAmount
+          if (
+            investmentAmount != '100000000' &&
+            investmentAmount != '500000000' &&
+            investmentAmount != '1000000000'
+          ) {
+            res.status(400).send('Invalid investment amount')
+          }
+          let availableCircles = []
+          availableCircles = await Circle.find({ investmentAmount }).sort({
+            _id: 1,
+          })
+          if (availableCircles.length == 0) {
+            let newCircle = await createNewCircle(investmentAmount)
+            await availableCircles.push(newCircle)
+          }
+          try {
+            await pushParticipantToCircle(
+              availableCircles[0],
+              senderAddress,
+              transactionId,
+            )
+          } catch (error) {
+            console.log(error)
+          }
+        }
+      }
+    })
+}
+
+module.exports = { router, eventListenerForCalls }

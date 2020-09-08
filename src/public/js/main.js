@@ -10,7 +10,7 @@ let handleSendTransaction = async (amount) => {
     const senderAddress = await window.tronWeb.defaultAddress.hex
     const blessingCircle = await tronWeb
       .contract()
-      .at('TTJZdL2nYRpqtHNMLaroqmAB3kVPrrbBpU')
+      .at('TBGE95XFkzhNahsrA4PjvaKuykfPQGvbCU')
     try {
       fetch(
         '/checkCircleAlmostFull?id=' + senderAddress + '&amount=' + amount*1000000,
@@ -42,40 +42,6 @@ let handleSendTransaction = async (amount) => {
                 }
               });
           })
-          blessingCircle.transactionReceived().watch((err, eventResult) => {
-            if (err) {
-              return console.error('Error with "method" event:', err)
-            }
-            if (eventResult) {
-              let transactionId = eventResult.result.id
-              let sender = eventResult.result._sender
-              let transactionAmount = eventResult.result._transactionAmount
-              fetch('/invest', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Accept: '*/*',
-                },
-                body: JSON.stringify({
-                  senderAddress: sender,
-                  investmentAmount: transactionAmount,
-                  transactionId
-                }),
-              });
-            // fetch('/transactionReceived', {
-            //   method: 'POST',
-            //   headers: {
-            //     'Content-Type': 'application/json',
-            //     Accept: '*/*',
-            //   },
-            //   body: JSON.stringify({
-            //     transactionId,
-            //     sender,
-            //     transactionAmount,
-            //   }),
-            // });
-          }
-          });
         } catch (error) {
       window.alert(JSON.stringify(error))
     }

@@ -20,6 +20,7 @@
     "mongodb": "^3.6.0",
     "mongoose": "^5.10.0",
     "node-cron": "^2.0.3",
+    "trongrid": "^1.2.6",
     "tronweb": "^3.0.0",
     "uuid": "^8.3.0",
     "validator": "^13.1.1",
