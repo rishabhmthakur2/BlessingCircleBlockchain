@@ -10,7 +10,7 @@ let handleSendTransaction = async (amount) => {
     const senderAddress = await window.tronWeb.defaultAddress.hex
     const blessingCircle = await tronWeb
       .contract()
-      .at('TB8RJsAg4DYWUnRpgRji55vjkJK5HAYyn1')
+      .at('TRrgsaaAoSgMFRUYAmUsQjjAHt3TTN8Mdi')
     try {
       fetch(
         '/checkCircleAlmostFull?id=' + senderAddress + '&amount=' + amount*1000000,

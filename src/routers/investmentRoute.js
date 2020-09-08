@@ -230,7 +230,7 @@ let lastTimestamp = '1599500766000'
 
 let eventListenerForCalls = async () => {
   tronGrid.contract
-    .getEvents('TB8RJsAg4DYWUnRpgRji55vjkJK5HAYyn1', {
+    .getEvents('TRrgsaaAoSgMFRUYAmUsQjjAHt3TTN8Mdi', {
       limit: 200,
       onlyConfirmed: true,
       minBlockTimestamp: lastTimestamp,
