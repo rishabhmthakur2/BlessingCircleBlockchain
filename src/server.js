@@ -2,12 +2,19 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const path = require('path')
 const hbs = require('hbs')
+
 const cors = require('cors')
 require('./db/mongoose')
 const investment = require('./routers/investmentRoute')
 const TronWeb = require('tronweb')
 const cron = require('node-cron')
+const https = require('https');
+const fs = require('fs');
 
+const options = {
+  key: fs.readFileSync('src/certs/final.key', 'utf8'),
+  cert: fs.readFileSync('src/certs/sousou.crt', 'utf8')
+};
 const app = express()
 const port = process.env.PORT || 3000
 // app.use(cors);
@@ -49,6 +56,10 @@ cron.schedule('*/5 * * * *', () => {
   investment.eventListenerForCalls()
 })
 
-app.listen(port, () => {
-  console.log('Server is listening for calls on port: ' + port)
-})
+var httpsServer = https.createServer(options, app);
+
+httpsServer.listen(port);
+
+// app.listen(port, () => {
+//   console.log('Server is listening for calls on port: ' + port)
+// })
